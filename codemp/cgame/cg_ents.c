@@ -25,6 +25,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 // cg_ents.c -- present snapshot entities, happens every single frame
 
 #include "cg_local.h"
+#include "game/bg_flux.h"
 /*
 Ghoul2 Insert Start
 */
@@ -3349,7 +3350,10 @@ Ghoul2 Insert End
 	case ET_TERRAIN:
 		break;
 	case ET_GENERAL:
-		CG_General( cent );
+		if (cent->currentState.generic1 == FLUX_BOARD_MARKER)
+			CG_FluxBoard(cent);
+		else
+			CG_General( cent );
 		break;
 	case ET_PLAYER:
 		CG_Player( cent );

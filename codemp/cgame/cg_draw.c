@@ -7991,6 +7991,7 @@ static void CG_Draw2D( void ) {
 	}
 
 	CG_Draw2DScreenTints();
+	CG_FluxHUD();
 
 	if (cg.snap->ps.rocketLockIndex != ENTITYNUM_NONE && (cg.time - cg.snap->ps.rocketLockTime) > 0)
 	{
