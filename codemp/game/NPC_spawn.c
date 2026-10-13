@@ -525,7 +525,7 @@ NPC_WeaponsForTeam
 int NPC_WeaponsForTeam( team_t team, int spawnflags, const char *NPC_type )
 {
 	//*** not sure how to handle this, should I pass in class instead of team and go from there? - dmv
-	switch(team)
+	switch((npcteam_t)team)
 	{
 //	case TEAM_IMPERIAL:
 	case NPCTEAM_ENEMY:
