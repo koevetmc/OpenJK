@@ -5316,7 +5316,7 @@ void WP_ForcePowersUpdate( gentity_t *self, usercmd_t *ucmd )
 	}
 
 #ifndef METROID_JUMP
-	else if ( (ucmd->upmove > 10) && (self->client->ps.pm_flags & PMF_JUMP_HELD) && self->client->ps.groundTime && (level.time - self->client->ps.groundTime) > 150 && !BG_HasYsalamiri(level.gametype, &self->client->ps) && BG_CanUseFPNow(level.gametype, &self->client->ps, level.time, FP_LEVITATION) )
+	else if ( !BG_FluxRiding(&self->client->ps) && (ucmd->upmove > 10) && (self->client->ps.pm_flags & PMF_JUMP_HELD) && self->client->ps.groundTime && (level.time - self->client->ps.groundTime) > 150 && !BG_HasYsalamiri(level.gametype, &self->client->ps) && BG_CanUseFPNow(level.gametype, &self->client->ps, level.time, FP_LEVITATION) )
 	{//just charging up
 		ForceJumpCharge( self, ucmd );
 	}
@@ -5326,7 +5326,7 @@ void WP_ForcePowersUpdate( gentity_t *self, usercmd_t *ucmd )
 	}
 #endif
 
-	if (!(self->client->ps.pm_flags & PMF_JUMP_HELD) && self->client->ps.fd.forceJumpCharge)
+	if (!BG_FluxRiding(&self->client->ps) && !(self->client->ps.pm_flags & PMF_JUMP_HELD) && self->client->ps.fd.forceJumpCharge)
 	{
 		if (!(ucmd->buttons & BUTTON_FORCEPOWER) ||
 			self->client->ps.fd.forcePowerSelected != FP_LEVITATION)
@@ -5384,7 +5384,10 @@ void WP_ForcePowersUpdate( gentity_t *self, usercmd_t *ucmd )
 		BG_CanUseFPNow(level.gametype, &self->client->ps, level.time, self->client->ps.fd.forcePowerSelected))
 	{
 		if (self->client->ps.fd.forcePowerSelected == FP_LEVITATION)
-			ForceJumpCharge( self, ucmd );
+		{
+			if (!BG_FluxRiding(&self->client->ps))
+				ForceJumpCharge( self, ucmd );
+		}
 		else
 			WP_DoSpecificPower( self, ucmd, self->client->ps.fd.forcePowerSelected );
 	}

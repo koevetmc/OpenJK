@@ -10708,6 +10708,8 @@ void PmoveSingle (pmove_t *pmove) {
 
 	// set mins, maxs, and viewheight
 	PM_CheckDuck ();
+	if (BG_FluxRiding(pm->ps))
+		pm->mins[2] = MINS_Z - 6.0f;
 
 	if (pm->ps->pm_type == PM_JETPACK)
 	{
@@ -11047,6 +11049,8 @@ void PmoveSingle (pmove_t *pmove) {
 			} else if ( pm->waterlevel > 1 ) {
 				// swimming
 				PM_WaterMove();
+			} else if (BG_FluxRiding(pm->ps)) {
+				BG_FluxMove(pm, pml.msec);
 			} else if ( pml.walking ) {
 				// walking on ground
 				PM_WalkMove();
@@ -11120,14 +11124,17 @@ void PmoveSingle (pmove_t *pmove) {
 		pm_entSelf->s.NPC_class != CLASS_VEHICLE))
 	{ //don't do this if we're on a vehicle, or we are one
 		// footstep events / legs animations
-		PM_Footsteps();
+		if (BG_FluxRiding(pm->ps))
+			PM_ContinueLegsAnim((pm->ps->pm_flags & PMF_DUCKED) ? BOTH_CROUCH1IDLE : BOTH_STAND1);
+		else
+			PM_Footsteps();
 	}
 
 	// entering / leaving water splashes
 	PM_WaterEvents();
 
 	// snap velocity to integer coordinates to save network bandwidth
-	if ( !pm->pmove_float )
+	if ( !pm->pmove_float && !BG_FluxRiding(pm->ps) )
 		trap->SnapVector( pm->ps->velocity );
 
  	if (pm->ps->pm_type == PM_JETPACK || gPMDoSlowFall )
@@ -11209,6 +11216,8 @@ void Pmove (pmove_t *pmove) {
 				msec = 66;
 			}
 		}
+		if (BG_FluxRiding(pmove->ps) && msec > 8)
+			msec = 8;
 		pmove->cmd.serverTime = pmove->ps->commandTime + msec;
 
 		PmoveSingle( pmove );

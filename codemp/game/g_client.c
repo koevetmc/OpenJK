@@ -3104,6 +3104,7 @@ void ClientSpawn(gentity_t *ent) {
 
 	index = ent - g_entities;
 	client = ent->client;
+	G_FluxRelease(ent);
 
 	//first we want the userinfo so we can see if we should update this client's saber -rww
 	trap->GetUserinfo( index, userinfo, sizeof( userinfo ) );
@@ -3933,6 +3934,7 @@ void ClientDisconnect( int clientNum ) {
 	i = 0;
 
 	G_LeaveVehicle( ent, qtrue );
+	G_FluxRelease(ent);
 
 	if ( ent->client->ewebIndex )
 	{

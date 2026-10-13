@@ -576,6 +576,8 @@ extern	pmove_t		*pm;
 // if a full pmove isn't done on the client, you can just update the angles
 void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd );
 void Pmove (pmove_t *pmove);
+qboolean BG_FluxRiding(const playerState_t *ps);
+void BG_FluxMove(pmove_t *move, int msec);
 
 
 //===================================================================================
@@ -594,7 +596,14 @@ typedef enum {
 	STAT_ARMOR,
 	STAT_DEAD_YAW,					// look this direction when dead (FIXME: get rid of?)
 	STAT_CLIENTS_READY,				// bit mask of clients wishing to exit the intermission (FIXME: configstring?)
-	STAT_MAX_HEALTH					// health / armor limit, changable by handicap
+	STAT_MAX_HEALTH,					// health / armor limit, changable by handicap
+	STAT_FLUX_BOARD,
+	STAT_FLUX_FLAGS,
+	STAT_FLUX_YAW,
+	STAT_FLUX_TRICK,
+	STAT_FLUX_AIR_MS,
+	STAT_FLUX_TRICK_MS,
+	STAT_FLUX_PUMP_MS
 } statIndex_t;
 
 

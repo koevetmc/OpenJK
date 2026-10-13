@@ -540,6 +540,8 @@ spawn_t	spawns[] = {
 	{ "misc_bsp",							SP_misc_bsp },
 	{ "misc_cubemap",						SP_misc_cubemap },
 	{ "misc_faller",						SP_misc_faller },
+	{ "misc_fluxboard", SP_misc_fluxboard },
+	{ "func_fluxrail", SP_func_static },
 	{ "misc_G2model",						SP_misc_G2model },
 	{ "misc_holocron",						SP_misc_holocron },
 	{ "misc_maglock",						SP_misc_maglock },

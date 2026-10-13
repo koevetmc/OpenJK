@@ -3049,7 +3049,9 @@ void ClientThink_real( gentity_t *ent ) {
 #endif
 	}
 
+	G_FluxInput(ent, &pmove.cmd);
 	Pmove (&pmove);
+	G_FluxUpdate(ent);
 
 	if (ent->client->solidHack)
 	{
