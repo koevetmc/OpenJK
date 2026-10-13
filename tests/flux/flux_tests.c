@@ -248,9 +248,51 @@ static void TestTricks(void)
 	puts("PASS ollie, timed kickflip/heelflip, late combo rejection, one-shot boost, pump timing");
 }
 
+static void TestGrinds(void)
+{
+	test_world_t geometry = { 0 };
+	flux_world_t world = World(&geometry);
+	flux_input_t input = Input();
+	flux_state_t state = Rider();
+	geometry.rail = 1;
+	state.origin[2] = 90.0f;
+	state.velocity[0] = 220.0f;
+	input.crouch = 1;
+	Run(&state, &input, &world, 40);
+	CHECK(state.flags & FLUX_GRINDING);
+	CHECK(state.trick == FLUX_TRICK_GRIND);
+	CHECK(fabsf(state.origin[2] - 64.0f) < 0.05f);
+	input.jump = 1;
+	input.crouch = 0;
+	Run(&state, &input, &world, 1);
+	CHECK(!(state.flags & FLUX_GRINDING) && state.velocity[2] > 200.0f);
+	input.jump = 0;
+	input.crouch = 1;
+	state = Rider();
+	state.origin[2] = 64.0f;
+	state.velocity[0] = 220.0f;
+	Run(&state, &input, &world, 300);
+	CHECK(!(state.flags & FLUX_GRINDING));
+	CHECK(state.origin[0] > 420.0f);
+	geometry.rail = 0;
+	state = Rider();
+	state.velocity[0] = 220.0f;
+	Run(&state, &input, &world, 30);
+	CHECK(!(state.flags & FLUX_GRINDING));
+	geometry.rail = 1;
+	state = Rider();
+	state.origin[2] = 64.0f;
+	state.velocity[1] = 220.0f;
+	state.yaw = 90.0f;
+	Run(&state, &input, &world, 1);
+	CHECK(!(state.flags & FLUX_GRINDING));
+	puts("PASS trace rail catch, grind exit, ollie out, floor and crosswise rejection");
+}
+
 int main(void)
 {
 	TestMovement();
 	TestTricks();
+	TestGrinds();
 	return 0;
 }

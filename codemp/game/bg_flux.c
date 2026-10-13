@@ -82,6 +82,29 @@ static int Flux_Slide(flux_state_t *state, const flux_world_t *world, float dt)
 	return 0;
 }
 
+static int Flux_Support(const flux_state_t *state, const flux_world_t *world, float x, float y)
+{
+	float start[3] = { state->origin[0]+x, state->origin[1]+y, state->origin[2]+world->mins[2]+2.0f };
+	float end[3] = { start[0], start[1], start[2]-7.0f };
+	flux_trace_t hit;
+	Flux_Trace(world, &hit, start, end, 1);
+	return !hit.solid && hit.fraction < 1.0f && hit.normal[2] > 0.95f;
+}
+
+static int Flux_Edge(const flux_state_t *state, const flux_world_t *world)
+{
+	float x = cosf(state->yaw*0.01745329252f);
+	float y = sinf(state->yaw*0.01745329252f);
+	float speed = Flux_Speed(state);
+	if (speed < 65.0f || fabsf(state->velocity[0]*x + state->velocity[1]*y) < speed*0.95f)
+		return 0;
+	return Flux_Support(state, world, 0.0f, 0.0f)
+		&& Flux_Support(state, world, x*12.0f, y*12.0f)
+		&& Flux_Support(state, world, -x*12.0f, -y*12.0f)
+		&& (!Flux_Support(state, world, -y*18.0f, x*18.0f)
+			|| !Flux_Support(state, world, y*18.0f, -x*18.0f));
+}
+
 static void Flux_Tick(flux_state_t *state, const flux_input_t *input,
 	const flux_world_t *world, int msec, flux_result_t *result)
 {
@@ -111,6 +134,15 @@ static void Flux_Tick(flux_state_t *state, const flux_input_t *input,
 	state->trick_ms = state->trick_ms > msec ? state->trick_ms-msec : 0;
 	if (!state->trick_ms)
 		state->trick = FLUX_TRICK_NONE;
+	state->flags &= ~FLUX_GRINDING;
+	if (grounded && input->control && input->crouch && Flux_Edge(state, world))
+	{
+		state->flags |= FLUX_GRINDING;
+		state->trick = FLUX_TRICK_GRIND;
+		state->trick_ms = 500;
+		steer = 0.0f;
+		push = 0.0f;
+	}
 	if (grounded)
 	{
 		if (state->air_ms && (state->trick == FLUX_TRICK_KICKFLIP || state->trick == FLUX_TRICK_HEELFLIP)
@@ -159,7 +191,7 @@ static void Flux_Tick(flux_state_t *state, const flux_input_t *input,
 			}
 		}
 	}
-	if (input->control && input->crouch && grounded)
+	if (input->control && input->crouch && grounded && !(state->flags & FLUX_GRINDING))
 		state->pump_ms = state->pump_ms < 2000-msec ? state->pump_ms+msec : 2000;
 	else
 	{
@@ -188,7 +220,8 @@ static void Flux_Tick(flux_state_t *state, const flux_input_t *input,
 	if (grounded)
 	{
 		float lateral = Flux_Dot(state->velocity, right);
-		float drag = (12.0f + 0.00010f*speed*speed + (push < 0.0f ? 330.0f*-push : 0.0f))*dt;
+		float drag = (state->flags & FLUX_GRINDING) ? 7.0f*dt
+			: (12.0f + 0.00010f*speed*speed + (push < 0.0f ? 330.0f*-push : 0.0f))*dt;
 		float fraction = speed > 0.0f ? fmaxf(0.0f, speed-drag)/speed : 0.0f;
 		for (axis = 0; axis < 2; ++axis)
 			state->velocity[axis] = (state->velocity[axis] - right[axis]*lateral*fminf(1.0f, 6.0f*dt))*fraction;
