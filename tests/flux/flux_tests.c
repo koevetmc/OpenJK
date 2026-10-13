@@ -183,8 +183,74 @@ static void TestMovement(void)
 	puts("PASS push, drag, carving, brake, wall collision, slope gravity, solid recovery");
 }
 
+static void TestTricks(void)
+{
+	test_world_t geometry = { 0 };
+	flux_world_t world = World(&geometry);
+	flux_input_t input = Input();
+	flux_state_t state = Rider();
+	flux_result_t result;
+	float plain_height;
+	int cost = 0, i;
+	input.jump = 1;
+	Run(&state, &input, &world, 1);
+	CHECK(state.trick == FLUX_TRICK_OLLIE && state.velocity[2] > 240.0f);
+	Run(&state, &input, &world, 10);
+	input.steer = -1.0f;
+	Run(&state, &input, &world, 1);
+	CHECK(state.trick == FLUX_TRICK_KICKFLIP);
+	input.steer = 0.0f;
+	Run(&state, &input, &world, 100);
+	CHECK(state.flags & FLUX_GROUNDED);
+	CHECK(fabsf(state.origin[2] - 24.0f) < 0.01f);
+	state = Rider();
+	input.jump = 1;
+	Run(&state, &input, &world, 10);
+	input.steer = 1.0f;
+	Run(&state, &input, &world, 1);
+	CHECK(state.trick == FLUX_TRICK_HEELFLIP);
+	state = Rider();
+	input.steer = 0.0f;
+	Run(&state, &input, &world, 40);
+	input.steer = -1.0f;
+	Run(&state, &input, &world, 1);
+	CHECK(state.trick == FLUX_TRICK_OLLIE);
+	state = Rider();
+	input.steer = 0.0f;
+	Run(&state, &input, &world, 30);
+	plain_height = state.origin[2];
+	state = Rider();
+	input.boost = 160.0f;
+	for (i = 0; i < 30; ++i)
+	{
+		Flux_Step(&state, &input, &world, 8, &result);
+		cost += result.force_cost;
+	}
+	CHECK(cost == 10 && state.origin[2] > plain_height + 10.0f);
+	Run(&state, &input, &world, 200);
+	CHECK(state.flags & FLUX_GROUNDED);
+	CHECK(state.air_ms == 0);
+	input = Input();
+	state = Rider();
+	state.velocity[0] = 250.0f;
+	input.crouch = 1;
+	Run(&state, &input, &world, 30);
+	plain_height = Flux_Speed(&state);
+	input.crouch = 0;
+	Run(&state, &input, &world, 1);
+	CHECK(Flux_Speed(&state) > plain_height + 20.0f);
+	input.crouch = 1;
+	Run(&state, &input, &world, 1);
+	input.crouch = 0;
+	plain_height = Flux_Speed(&state);
+	Run(&state, &input, &world, 1);
+	CHECK(Flux_Speed(&state) < plain_height);
+	puts("PASS ollie, timed kickflip/heelflip, late combo rejection, one-shot boost, pump timing");
+}
+
 int main(void)
 {
 	TestMovement();
+	TestTricks();
 	return 0;
 }

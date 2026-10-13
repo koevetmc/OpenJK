@@ -108,6 +108,75 @@ static void Flux_Tick(flux_state_t *state, const flux_input_t *input,
 			state->origin[axis] += (down[axis] - state->origin[axis])*ground.fraction;
 		Flux_Clip(state->velocity, ground.normal);
 	}
+	state->trick_ms = state->trick_ms > msec ? state->trick_ms-msec : 0;
+	if (!state->trick_ms)
+		state->trick = FLUX_TRICK_NONE;
+	if (grounded)
+	{
+		if (state->air_ms && (state->trick == FLUX_TRICK_KICKFLIP || state->trick == FLUX_TRICK_HEELFLIP)
+			&& state->trick_ms > 1050)
+		{
+			state->trick = FLUX_TRICK_BAIL;
+			state->trick_ms = 1000;
+			state->velocity[0] *= 0.4f;
+			state->velocity[1] *= 0.4f;
+		}
+		state->air_ms = 0;
+		state->flags &= ~(FLUX_BOOSTED | FLUX_OLLIE);
+		if (input->control && input->jump && !(state->flags & FLUX_JUMP_HELD))
+		{
+			state->velocity[2] = 270.0f;
+			state->flags |= FLUX_OLLIE;
+			state->flags &= ~(FLUX_GROUNDED | FLUX_GRINDING);
+			state->trick = FLUX_TRICK_OLLIE;
+			state->trick_ms = 1400;
+			grounded = 0;
+			result->ground_entity = -1;
+		}
+	}
+	if (!grounded)
+	{
+		state->air_ms = state->air_ms < 32000-msec ? state->air_ms+msec : 32000;
+		if (input->control && (state->flags & FLUX_OLLIE))
+		{
+			if (state->trick == FLUX_TRICK_OLLIE && state->air_ms >= 40 && state->air_ms <= 260)
+			{
+				if (steer < -0.5f && !(state->flags & FLUX_LEFT_HELD))
+					state->trick = FLUX_TRICK_KICKFLIP;
+				if (steer > 0.5f && !(state->flags & FLUX_RIGHT_HELD))
+					state->trick = FLUX_TRICK_HEELFLIP;
+				if (state->trick != FLUX_TRICK_OLLIE)
+					state->trick_ms = 1400;
+			}
+			if (input->jump && state->air_ms >= 150 && state->air_ms <= 260
+				&& !(state->flags & FLUX_BOOSTED) && input->boost > 0.0f)
+			{
+				state->velocity[2] += Flux_Clamp(input->boost, 0.0f, 240.0f);
+				state->flags |= FLUX_BOOSTED;
+				result->force_cost += 10;
+				if (state->trick == FLUX_TRICK_OLLIE)
+					state->trick = FLUX_TRICK_BOOST;
+			}
+		}
+	}
+	if (input->control && input->crouch && grounded)
+		state->pump_ms = state->pump_ms < 2000-msec ? state->pump_ms+msec : 2000;
+	else
+	{
+		if (input->control && grounded && !input->crouch && (state->flags & FLUX_CROUCH_HELD)
+			&& state->pump_ms >= 160 && state->pump_ms <= 650 && speed > 80.0f && speed < 700.0f*scale)
+		{
+			float gain = 1.0f + (30.0f + fabsf(state->velocity[2])*0.10f)/speed;
+			state->velocity[0] *= gain;
+			state->velocity[1] *= gain;
+		}
+		state->pump_ms = 0;
+	}
+	state->flags &= ~(FLUX_JUMP_HELD | FLUX_CROUCH_HELD | FLUX_LEFT_HELD | FLUX_RIGHT_HELD);
+	if (input->jump) state->flags |= FLUX_JUMP_HELD;
+	if (input->crouch) state->flags |= FLUX_CROUCH_HELD;
+	if (steer < -0.5f) state->flags |= FLUX_LEFT_HELD;
+	if (steer > 0.5f) state->flags |= FLUX_RIGHT_HELD;
 	state->yaw -= steer * (grounded ? 115.0f : 75.0f) * dt * Flux_Clamp(speed / 160.0f, 0.2f, 1.0f);
 	state->yaw = fmodf(state->yaw + 360.0f, 360.0f);
 	forward[0] = cosf(state->yaw * 0.01745329252f);
