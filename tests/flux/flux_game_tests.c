@@ -92,7 +92,7 @@ static void Locate(sharedEntity_t *entities, int count, int stride, playerState_
 	(void)entities; (void)count; (void)stride; (void)states; (void)clientstride;
 }
 
-static void QDECL Fail(int code, const char *format, ...)
+static NORETURN void QDECL Fail(int code, const char *format, ...)
 {
 	(void)code;
 	fprintf(stderr, "engine error: %s\n", format);

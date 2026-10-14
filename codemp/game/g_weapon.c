@@ -2665,7 +2665,7 @@ void WP_PlaceLaserTrap( gentity_t *ent, qboolean alt_fire )
 		if ( removeMe != -1 )
 		{
 			//remove it... or blow it?
-			if ( &g_entities[foundLaserTraps[removeMe]] == NULL )
+			if ( foundLaserTraps[removeMe] < 0 || foundLaserTraps[removeMe] >= ENTITYNUM_WORLD )
 			{
 				break;
 			}
@@ -3039,7 +3039,7 @@ void WP_DropDetPack( gentity_t *ent, qboolean alt_fire )
 		if ( removeMe != -1 )
 		{
 			//remove it... or blow it?
-			if ( &g_entities[foundDetPacks[removeMe]] == NULL )
+			if ( foundDetPacks[removeMe] < 0 || foundDetPacks[removeMe] >= ENTITYNUM_WORLD )
 			{
 				break;
 			}

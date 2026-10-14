@@ -6940,7 +6940,7 @@ void StandardBotAI(bot_state_t *bs, float thinktime)
 		}
 		else
 		{
-			VectorCopy(bs->currentEnemy->client->ps.origin, headlevel);
+			VectorCopy(bs->currentEnemy->r.currentOrigin, headlevel);
 		}
 
 		if (!bs->frame_Enemy_Vis)
